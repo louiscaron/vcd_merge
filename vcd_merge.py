@@ -167,8 +167,8 @@ def vcd_merge(vcdfiles, outfile):
             elif c in '01xXzZ':
                 # the local identifier code is stored in rest
                 outfile.write(c + vcd.final_id_code(rest) + '\n')
-            elif c in 'bBrR':
-                outfile.write(token + ' ' + vcd.final_id_code(tokenizer.next()) + '\n')
+            elif c in 'bBrRsS':
+                outfile.write(token + ' ' + vcd.final_id_code(vcd.tokenizer.next()) + '\n')
             else:
                 raise AssertionError("Unexpected token in {}: {}".format(vcd.name, token))
         vcd.close()
