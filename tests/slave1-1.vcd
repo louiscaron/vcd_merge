@@ -1,0 +1,18 @@
+$date today $end
+$timescale 1 ns $end
+$scope module jtag $end
+$var string 1 0 operation $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+sunknown 0
+$end
+#11
+sidle 0
+#13
+sir=0x4 0
+#39
+sin=0x0out=0x15a083 0
+#111
+sidle 0
