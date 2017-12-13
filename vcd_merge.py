@@ -19,17 +19,17 @@ class VCD(object):
             return 0
         else:
             return 1
-            
+
     def close(self):
         self._file.close()
         self._file = None
-    
+
     def closed(self):
         return self._file == None
 
     def add_var(self, id_code, var_type, size, final_id_code, reference):
         self.idcodes[id_code] = (var_type, size, final_id_code, reference)
-        
+
     def timescale_fs(self):
         "Return the timescale value as a multiple of fs"
         time_unit = {'fs':1, 'ps':10**3, 'ns':10**6, 'us':10**9, 'ms':10**12, 's':10**15}
@@ -44,11 +44,9 @@ class VCD(object):
     def uses_id_code(self, id_code):
         "Return True if the identifier_code belongs to the VCD else False"
         return id_code in self.final_id_codes()
-    
+
     def final_id_code(self, id_code):
         return self.idcodes[id_code][2]
-
-
 
 def copy_tokens(file, keyword, tokens):
     file.write(keyword)
@@ -61,7 +59,7 @@ def parse_error(vcds, vcd, keyword):
 
 def drop_declaration(vcds, vcd, keyword):
     return tuple(takewhile(lambda x: x != "$end", vcd.tokenizer))
-    
+
 def save_declaration(vcds, vcd, keyword):
     tokens = tuple(takewhile(lambda x: x != "$end", vcd.tokenizer))
     vcd.__setattr__(keyword.lstrip('$'), " ".join(tokens) )
@@ -74,7 +72,7 @@ vcd_version = save_declaration
 def vcd_var(vcds, vcd, keyword):
     tokens = tuple(takewhile(lambda x: x != "$end", vcd.tokenizer))
     var_type, size, local_id_code, reference = tokens
-    
+
     new_code = chr(33)
     def next_code(code):
         lcode = list(code)
@@ -88,19 +86,19 @@ def vcd_var(vcds, vcd, keyword):
                     lcode.append(chr(33))
                     break
         return ''.join(lcode)
-    
+
     final_id_code = local_id_code
 
     # change the identifier code if it is already in use
     while filter(lambda x: x.uses_id_code(final_id_code), vcds):
         final_id_code = new_code
         new_code = next_code(new_code)
-    
+
     if local_id_code != final_id_code:
-        print("{}: replacing var id '{}' with '{}'".format(vcd.name, local_id_code, final_id_code)) 
+        print("{}: replacing var id '{}' with '{}'".format(vcd.name, local_id_code, final_id_code))
 
     vcd.add_var(local_id_code, var_type, size, final_id_code, reference)
-    
+
     # return the tuple of tokens using the final code
     return (var_type, size, final_id_code, reference)
 
@@ -131,7 +129,7 @@ def vcd_merge(vcdfiles, outfile):
                 copy_tokens(outfile, token, subtokens)
     # generate the end definitions line
     outfile.write("\n$enddefinitions $end\n")
-    
+
     # check the timescales (must all be lower or equal to that of the master)
     vcd_master = vcds[0]
     vcd_master.timescale_mult = 1
@@ -154,7 +152,7 @@ def vcd_merge(vcdfiles, outfile):
                 break
             else:
                 raise AssertionError("Unexpected token before simu time in {}: {}".format(vcd.name, token))
-        
+
     def handle(vcd):
         for token in vcd.tokenizer:
             c, rest = token[0], token[1:]
@@ -172,16 +170,16 @@ def vcd_merge(vcdfiles, outfile):
             else:
                 raise AssertionError("Unexpected token in {}: {}".format(vcd.name, token))
         vcd.close()
-    
+
     while vcds:
         # retrieve the earliest time in all VCDs
         curtime = min(vcds).now
         outfile.write('#' + str(curtime)+'\n')
         # generate the value change for all VCDs that have activity at that time
         map(handle, filter(lambda v: v.now == curtime, vcds))
-        # remove VCDs that are finished
+        # remove VCDs that are been read through
         vcds = filter(lambda v: not v.closed(), vcds)
-    
+
 
 # use a customer formatter to do raw text and add default values
 class CustomerFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
@@ -189,7 +187,18 @@ class CustomerFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawText
 
 argparser = argparse.ArgumentParser(formatter_class=CustomerFormatter,
                                     description=textwrap.dedent('''
-    Merge VCD files
+    Merge VCD files specified in the input list in the output file.
+    '''), epilog=textwrap.dedent('''
+    The first input file in the list is the master VCD file: the declaration
+    part is copied entirely in the output file (version, date, comment, timescale).
+    The other files in the list are considered slaves: only the variable declaration
+    is copied in the output file.  Furthermore if their timescale is less than the
+    master timescale it will generate an error.  Finally, if their identifier codes
+    are already in use, they will be replaced (this will generate a message on the
+    screen).
+    
+    Based on toggle count sample code from Donald 'Paddy' McCarthy:
+        http://paddy3118.blogspot.com/2008/03/writing-vcd-to-toggle-count-generator.html
     '''))
 
 argparser.add_argument('infiles', action='store', type=argparse.FileType('r'), nargs='+',
