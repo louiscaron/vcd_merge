@@ -12,20 +12,16 @@ class VCD(object):
         self.tokenizer = (word for line in file for word in line.split() if word)
         self.idcodes = dict()
 
+    def __del__(self):
+        self._file.close()
+
     def __cmp__(self, other):
-        if self.now < other.now:
+        if self.simutime < other.simutime:
             return -1
-        elif self.now == other.now:
+        elif self.simutime == other.simutime:
             return 0
         else:
             return 1
-
-    def close(self):
-        self._file.close()
-        self._file = None
-
-    def closed(self):
-        return self._file == None
 
     def add_var(self, id_code, var_type, size, final_id_code, reference):
         self.idcodes[id_code] = (var_type, size, final_id_code, reference)
@@ -148,7 +144,7 @@ def vcd_merge(vcdfiles, outfile):
                 # skip $dump* tokens and $end tokens in sim section
                 continue
             elif c == '#':
-                vcd.now = int(rest, 10) * vcd.timescale_mult
+                vcd.simutime = int(rest, 10) * vcd.timescale_mult
                 break
             else:
                 raise AssertionError("Unexpected token before simu time in {}: {}".format(vcd.name, token))
@@ -160,7 +156,7 @@ def vcd_merge(vcdfiles, outfile):
                 # skip $dump* tokens and $end tokens in sim section
                 continue
             elif c == '#':
-                vcd.now = int(rest, 10) * vcd.timescale_mult
+                vcd.simutime = int(rest, 10) * vcd.timescale_mult
                 return
             elif c in '01xXzZ':
                 # the local identifier code is stored in rest
@@ -169,16 +165,17 @@ def vcd_merge(vcdfiles, outfile):
                 outfile.write(token + ' ' + vcd.final_id_code(vcd.tokenizer.next()) + '\n')
             else:
                 raise AssertionError("Unexpected token in {}: {}".format(vcd.name, token))
-        vcd.close()
+        vcds.remove(vcd)
+        
 
     while vcds:
         # retrieve the earliest time in all VCDs
-        curtime = min(vcds).now
+        curtime = min(vcds).simutime
         outfile.write('#' + str(curtime)+'\n')
         # generate the value change for all VCDs that have activity at that time
-        map(handle, filter(lambda v: v.now == curtime, vcds))
-        # remove VCDs that are been read through
-        vcds = filter(lambda v: not v.closed(), vcds)
+        map(handle, filter(lambda v: v.simutime == curtime, vcds))
+        
+    outfile.close()
 
 
 # use a customer formatter to do raw text and add default values
