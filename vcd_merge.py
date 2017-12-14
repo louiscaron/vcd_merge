@@ -166,7 +166,7 @@ def vcd_merge(vcdfiles, outfile):
             else:
                 raise AssertionError("Unexpected token in {}: {}".format(vcd.name, token))
         vcds.remove(vcd)
-        
+
 
     while vcds:
         # retrieve the earliest time in all VCDs
@@ -174,7 +174,7 @@ def vcd_merge(vcdfiles, outfile):
         outfile.write('#' + str(curtime)+'\n')
         # generate the value change for all VCDs that have activity at that time
         map(handle, filter(lambda v: v.simutime == curtime, vcds))
-        
+
     outfile.close()
 
 
@@ -193,7 +193,7 @@ argparser = argparse.ArgumentParser(formatter_class=CustomerFormatter,
     master timescale it will generate an error.  Finally, if their identifier codes
     are already in use, they will be replaced (this will generate a message on the
     screen).
-    
+
     Based on toggle count sample code from Donald 'Paddy' McCarthy:
         http://paddy3118.blogspot.com/2008/03/writing-vcd-to-toggle-count-generator.html
     '''))
