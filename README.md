@@ -1,7 +1,7 @@
 # vcd_merge
 A script to merge several VCD files into a single one
 
-Based on [toggle count sample|http://paddy3118.blogspot.com/2008/03/writing-vcd-to-toggle-count-generator.html] code from Donald 'Paddy' McCarthy:
+Based on [toggle count sample](http://paddy3118.blogspot.com/2008/03/writing-vcd-to-toggle-count-generator.html) code from Donald 'Paddy' McCarthy:
 
 e.g.
 python vcd_merge.py master.vcd slave1.vcd slave2.vcd slave3.vcd merged.vcd
