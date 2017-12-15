@@ -12,11 +12,15 @@ $upscope $end
 
 $enddefinitions $end
 #0
+$dumpvars
 00
 11
 02
 03
+$end
+$dumpvars
 sunknown !
+$end
 #1
 10
 #2

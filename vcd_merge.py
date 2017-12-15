@@ -136,25 +136,11 @@ def vcd_merge(vcdfiles, outfile):
             vcd.timescale, vcd.name, vcd_master.timescale, vcd_master.name)
         vcd.timescale_mult = fs_slave/fs_master
 
-    # chomp till first simulation time
-    for vcd in vcds:
-        for token in vcd.tokenizer:
-            c, rest = token[0], token[1:]
-            if c == '$':
-                # skip $dump* tokens and $end tokens in sim section
-                continue
-            elif c == '#':
-                vcd.simutime = int(rest, 10) * vcd.timescale_mult
-                break
-            else:
-                raise AssertionError("Unexpected token before simu time in {}: {}".format(vcd.name, token))
-
     def handle(vcd):
         for token in vcd.tokenizer:
             c, rest = token[0], token[1:]
             if c == '$':
-                # skip $dump* tokens and $end tokens in sim section
-                continue
+                outfile.write(token + '\n')
             elif c == '#':
                 vcd.simutime = int(rest, 10) * vcd.timescale_mult
                 return
@@ -167,6 +153,10 @@ def vcd_merge(vcdfiles, outfile):
                 raise AssertionError("Unexpected token in {}: {}".format(vcd.name, token))
         vcds.remove(vcd)
 
+    # chomp till first simulation time (force time at 0)
+    for vcd in vcds:
+        vcd.simutime = 0
+        handle(vcd)
 
     while vcds:
         # retrieve the earliest time in all VCDs
